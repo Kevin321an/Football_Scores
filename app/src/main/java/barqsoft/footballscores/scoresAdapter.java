@@ -13,7 +13,7 @@ import android.widget.TextView;
 /**
  * Created by yehya khaled on 2/26/2015.
  */
-public class scoresAdapter extends CursorAdapter
+public class ScoresAdapter extends CursorAdapter
 {
     public static final int COL_HOME = 3;
     public static final int COL_AWAY = 4;
@@ -26,7 +26,7 @@ public class scoresAdapter extends CursorAdapter
     public static final int COL_MATCHTIME = 2;
     public double detail_match_id = 0;
     private String FOOTBALL_SCORES_HASHTAG = "#Football_Scores";
-    public scoresAdapter(Context context,Cursor cursor,int flags)
+    public ScoresAdapter(Context context, Cursor cursor, int flags)
     {
         super(context,cursor,flags);
     }
@@ -36,6 +36,7 @@ public class scoresAdapter extends CursorAdapter
     {
         View mItem = LayoutInflater.from(context).inflate(R.layout.scores_list_item, parent, false);
         ViewHolder mHolder = new ViewHolder(mItem);
+        //set the ViewHolder associated with this list View
         mItem.setTag(mHolder);
         //Log.v(FetchScoreTask.LOG_TAG,"new View inflated");
         return mItem;
@@ -46,9 +47,19 @@ public class scoresAdapter extends CursorAdapter
     {
         final ViewHolder mHolder = (ViewHolder) view.getTag();
         mHolder.home_name.setText(cursor.getString(COL_HOME));
+        mHolder.home_name.setContentDescription(mContext.getString(R.string.a11y_host_team, cursor.getString(COL_HOME)));
+
         mHolder.away_name.setText(cursor.getString(COL_AWAY));
+        mHolder.away_name.setContentDescription(mContext.getString(R.string.away_team, cursor.getString(COL_AWAY)));
+
         mHolder.date.setText(cursor.getString(COL_MATCHTIME));
-        mHolder.score.setText(Utilies.getScores(cursor.getInt(COL_HOME_GOALS),cursor.getInt(COL_AWAY_GOALS)));
+        mHolder.date.setContentDescription(mContext.getString(R.string.date, cursor.getString(COL_MATCHTIME)));
+
+        mHolder.score.setText(Utilies.getScores(cursor.getInt(COL_HOME_GOALS), cursor.getInt(COL_AWAY_GOALS)));
+        mHolder.score.setContentDescription(mContext.getString
+                (R.string.score, Utilies.getScores(cursor.getInt(COL_HOME_GOALS), cursor.getInt(COL_AWAY_GOALS))));
+
+
         mHolder.match_id = cursor.getDouble(COL_ID);
         mHolder.home_crest.setImageResource(Utilies.getTeamCrestByTeamName(
                 cursor.getString(COL_HOME)));

@@ -28,12 +28,12 @@ import barqsoft.footballscores.R;
 /**
  * Created by yehya khaled on 3/2/2015.
  */
-public class myFetchService extends IntentService
+public class MyFetchService extends IntentService
 {
-    public static final String LOG_TAG = "myFetchService";
-    public myFetchService()
+    public static final String LOG_TAG = MyFetchService.class.getSimpleName();
+    public MyFetchService()
     {
-        super("myFetchService");
+        super("MyFetchService");
     }
 
     @Override
@@ -42,7 +42,7 @@ public class myFetchService extends IntentService
         getData("n2");
         getData("p2");
 
-        return;
+        //return;
     }
 
     private void getData (String timeFrame)
@@ -54,7 +54,7 @@ public class myFetchService extends IntentService
 
         Uri fetch_build = Uri.parse(BASE_URL).buildUpon().
                 appendQueryParameter(QUERY_TIME_FRAME, timeFrame).build();
-        //Log.v(LOG_TAG, "The url we are looking at is: "+fetch_build.toString()); //log spam
+        Log.d(LOG_TAG, "The url we are looking at is: "+fetch_build.toString()); //log spam
         HttpURLConnection m_connection = null;
         BufferedReader reader = null;
         String JSON_data = null;
