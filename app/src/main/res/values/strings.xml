@@ -42,4 +42,9 @@
     <string name="date">date <xliff:g id="time">%1$s</xliff:g></string>
     <string name="score">score<xliff:g id="score">%1$s</xliff:g></string>
 
+<!--    Widget title-->
+    <string name="title_widget_match">match</string>
+
+
+
 </resources>
