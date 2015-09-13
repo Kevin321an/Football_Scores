@@ -7,7 +7,6 @@ package barqsoft.footballscores.widget;
 import android.annotation.TargetApi;
 import android.content.Intent;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
@@ -16,10 +15,9 @@ import android.widget.AdapterView;
 import android.widget.RemoteViews;
 import android.widget.RemoteViewsService;
 
-import java.lang.annotation.Target;
-import java.util.concurrent.ExecutionException;
-
+import barqsoft.footballscores.Data.DatabaseContract;
 import barqsoft.footballscores.R;
+import barqsoft.footballscores.Utilies;
 
 /**
  * RemoteViewsService controlling the data being shown in the scrollable weather detail widget
@@ -27,21 +25,28 @@ import barqsoft.footballscores.R;
 @TargetApi(Build.VERSION_CODES.HONEYCOMB)
 public class DetailWidgetRemoteViewsService extends RemoteViewsService {
     public final String LOG_TAG = DetailWidgetRemoteViewsService.class.getSimpleName();
-    private static final String[] FORECAST_COLUMNS = {
-            WeatherContract.WeatherEntry.TABLE_NAME + "." + WeatherContract.WeatherEntry._ID,
-            WeatherContract.WeatherEntry.COLUMN_DATE,
-            WeatherContract.WeatherEntry.COLUMN_WEATHER_ID,
-            WeatherContract.WeatherEntry.COLUMN_SHORT_DESC,
-            WeatherContract.WeatherEntry.COLUMN_MAX_TEMP,
-            WeatherContract.WeatherEntry.COLUMN_MIN_TEMP
+    private static final String[] Match_COLUMNS = {
+            DatabaseContract.scores_table.LEAGUE_COL,
+            DatabaseContract.scores_table.DATE_COL,
+            DatabaseContract.scores_table.TIME_COL,
+            DatabaseContract.scores_table.HOME_COL,
+            DatabaseContract.scores_table.AWAY_COL,
+            DatabaseContract.scores_table.HOME_GOALS_COL,
+            DatabaseContract.scores_table.AWAY_GOALS_COL,
+            DatabaseContract.scores_table.MATCH_ID,
+            DatabaseContract.scores_table.MATCH_DAY,
     };
     // these indices must match the projection
-    static final int INDEX_WEATHER_ID = 0;
-    static final int INDEX_WEATHER_DATE = 1;
-    static final int INDEX_WEATHER_CONDITION_ID = 2;
-    static final int INDEX_WEATHER_DESC = 3;
-    static final int INDEX_WEATHER_MAX_TEMP = 4;
-    static final int INDEX_WEATHER_MIN_TEMP = 5;
+    public static final int COL_HOME = 3;
+    public static final int COL_AWAY = 4;
+    public static final int COL_HOME_GOALS = 5;
+    public static final int COL_AWAY_GOALS = 6;
+    public static final int COL_DATE = 1;
+    public static final int COL_LEAGUE = 5;
+    public static final int COL_MATCHDAY = 8;
+    public static final int COL_ID = 8;
+    public static final int COL_MATCHTIME = 2;
+    public double detail_match_id = 7;
 
     @Override
     public RemoteViewsFactory onGetViewFactory(Intent intent) {
@@ -63,16 +68,19 @@ public class DetailWidgetRemoteViewsService extends RemoteViewsService {
                 // data. Therefore we need to clear (and finally restore) the calling identity so
                 // that calls use our process and permission
                 final long identityToken = Binder.clearCallingIdentity();
-                String location = Utility.getPreferredLocation(DetailWidgetRemoteViewsService.this);
-                Uri weatherForLocationUri = WeatherContract.WeatherEntry
-                        .buildWeatherLocationWithStartDate(location, System.currentTimeMillis());
-                data = getContentResolver().query(weatherForLocationUri,
-                        FORECAST_COLUMNS,
-                        null,
-                        null,
-                        WeatherContract.WeatherEntry.COLUMN_DATE + " ASC");
+
+                //data = getContentResolver().query(weatherForLocationUri,
+                data = getContentResolver().query(         //SQL Lite : SQL
+                        DatabaseContract.BASE_CONTENT_URI, //Uri : FROM
+                        Match_COLUMNS,                     //projection : col,col,col
+                        null,                              //selection : Where
+                        null,                              //selectionArgs
+                        //WeatherContract.WeatherEntry.COLUMN_DATE + " ASC");//sortOrder: ORDER BY col,col,...
+                        null);
                 Binder.restoreCallingIdentity(identityToken);
             }
+
+            /**/
 
             @Override
             public void onDestroy() {
@@ -95,59 +103,42 @@ public class DetailWidgetRemoteViewsService extends RemoteViewsService {
                 }
                 RemoteViews views = new RemoteViews(getPackageName(),
                         R.layout.widget_detail_list_item);
-                int weatherId = data.getInt(INDEX_WEATHER_CONDITION_ID);
-                int weatherArtResourceId = Utility.getIconResourceForWeatherCondition(weatherId);
-                Bitmap weatherArtImage = null;
-                if ( !Utility.usingLocalGraphics(DetailWidgetRemoteViewsService.this) ) {
-                    String weatherArtResourceUrl = Utility.getArtUrlForWeatherCondition(
-                            DetailWidgetRemoteViewsService.this, weatherId);
-                    try {
-                        weatherArtImage = Glide.with(DetailWidgetRemoteViewsService.this)
-                                .load(weatherArtResourceUrl)
-                                .asBitmap()
-                                .error(weatherArtResourceId)
-                                .into(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL).get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        Log.e(LOG_TAG, "Error retrieving large icon from " + weatherArtResourceUrl, e);
-                    }
-                }
-                String description = data.getString(INDEX_WEATHER_DESC);
-                long dateInMillis = data.getLong(INDEX_WEATHER_DATE);
-                String formattedDate = Utility.getFriendlyDayString(
-                        DetailWidgetRemoteViewsService.this, dateInMillis, false);
-                double maxTemp = data.getDouble(INDEX_WEATHER_MAX_TEMP);
-                double minTemp = data.getDouble(INDEX_WEATHER_MIN_TEMP);
-                String formattedMaxTemperature =
-                        Utility.formatTemperature(DetailWidgetRemoteViewsService.this, maxTemp);
-                String formattedMinTemperature =
-                        Utility.formatTemperature(DetailWidgetRemoteViewsService.this, minTemp);
-                if (weatherArtImage != null) {
-                    views.setImageViewBitmap(R.id.widget_icon, weatherArtImage);
-                } else {
-                    views.setImageViewResource(R.id.widget_icon, weatherArtResourceId);
-                }
+
+
+                //get HOME team
+                String homeTeam=data.getString(COL_HOME);
+                String awayTeam=data.getString(COL_AWAY);
+                String homeGoal=data.getString(COL_HOME_GOALS);
+                String awayGoal=data.getString(COL_AWAY_GOALS);
+                String date=data.getString(COL_DATE);
+
+                String goal=Utilies.getScores(Integer.parseInt(homeGoal),Integer.parseInt(awayGoal));
+                Log.d(LOG_TAG,date);
+                //Log.d(LOG_TAG,awayGoal);
+                Log.d(LOG_TAG,goal);
+
+
+                views.setTextViewText(R.id.home_team, homeTeam);
+                views.setTextViewText(R.id.awawy_team, awayTeam);
+                views.setTextViewText(R.id.score_textview, goal);
+                views.setTextViewText(R.id.data_textview, date);
+                views.setImageViewResource(R.id.widget_icon_home, Utilies.getTeamCrestByTeamName(homeTeam));
+                views.setImageViewResource(R.id.widget_icon_away,Utilies.getTeamCrestByTeamName(awayTeam));
+
+                String description = homeTeam +"versus"+awayTeam+goal;
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1) {
                     setRemoteContentDescription(views, description);
                 }
-                views.setTextViewText(R.id.widget_date, formattedDate);
-                views.setTextViewText(R.id.widget_description, description);
-                views.setTextViewText(R.id.widget_high_temperature, formattedMaxTemperature);
-                views.setTextViewText(R.id.widget_low_temperature, formattedMinTemperature);
-
                 final Intent fillInIntent = new Intent();
-                String locationSetting =
-                        Utility.getPreferredLocation(DetailWidgetRemoteViewsService.this);
-                Uri weatherUri = WeatherContract.WeatherEntry.buildWeatherLocationWithDate(
-                        locationSetting,
-                        dateInMillis);
-                fillInIntent.setData(weatherUri);
+                Uri matchUri = DatabaseContract.scores_table.buildScoreWithDate();
+                fillInIntent.setData(matchUri);
                 views.setOnClickFillInIntent(R.id.widget_list_item, fillInIntent);
                 return views;
             }
 
             @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
             private void setRemoteContentDescription(RemoteViews views, String description) {
-                views.setContentDescription(R.id.widget_icon, description);
+                views.setContentDescription(R.id.widget_icon_home, description);
             }
 
             @Override
@@ -163,7 +154,7 @@ public class DetailWidgetRemoteViewsService extends RemoteViewsService {
             @Override
             public long getItemId(int position) {
                 if (data.moveToPosition(position))
-                    return data.getLong(INDEX_WEATHER_ID);
+                    return data.getLong(COL_ID);
                 return position;
             }
 

@@ -14,6 +14,7 @@ import android.widget.RemoteViews;
 
 import barqsoft.footballscores.MainActivity;
 import barqsoft.footballscores.R;
+import barqsoft.footballscores.service.MyFetchService;
 
 /**
  * Created by FM on 9/10/2015.
@@ -22,9 +23,9 @@ import barqsoft.footballscores.R;
 public class DetailWidgetProvider extends AppWidgetProvider {
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
 
-        // Perform this loop procedure for each App Widget that belongs to this provider
-        for (int appWidgetId : appWidgetIds) {
-            RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_detail);
+            // Perform this loop procedure for each App Widget that belongs to this provider
+            for (int appWidgetId : appWidgetIds) {
+                RemoteViews views = new RemoteViews(context.getPackageName(), R.layout.widget_detail);
 
             // Create an Intent to launch MainActivity
             Intent intent = new Intent(context, MainActivity.class);
@@ -37,10 +38,12 @@ public class DetailWidgetProvider extends AppWidgetProvider {
             } else {
                 setRemoteAdapterV11(context, views);
             }
+
+            //when click the Widget
             boolean useDetailActivity = context.getResources()
                     .getBoolean(R.bool.use_detail_activity);
             Intent clickIntentTemplate = useDetailActivity
-                    ? new Intent(context, DetailActivity.class)
+                    ? new Intent(context, MainActivity.class)
                     : new Intent(context, MainActivity.class);
             PendingIntent clickPendingIntentTemplate = TaskStackBuilder.create(context)
                     .addNextIntentWithParentStack(clickIntentTemplate)
@@ -56,20 +59,20 @@ public class DetailWidgetProvider extends AppWidgetProvider {
     @Override
     public void onReceive(@NonNull Context context, @NonNull Intent intent) {
         super.onReceive(context, intent);
-        if (SunshineSyncAdapter.ACTION_DATA_UPDATED.equals(intent.getAction())) {
+        if (MyFetchService.ACTION_DATA_UPDATED.equals(intent.getAction())) {
             AppWidgetManager appWidgetManager = AppWidgetManager.getInstance(context);
             int[] appWidgetIds = appWidgetManager.getAppWidgetIds(
                     new ComponentName(context, getClass()));
             appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_list);
-        }
-    }
+}
+}
 
-    /**
-     * Sets the remote adapter used to fill in the list items
-     *
-     * @param views RemoteViews to set the RemoteAdapter
-     */
-    @TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
+/**
+ * Sets the remote adapter used to fill in the list items
+ *
+ * @param views RemoteViews to set the RemoteAdapter
+ */
+@TargetApi(Build.VERSION_CODES.ICE_CREAM_SANDWICH)
     private void setRemoteAdapter(Context context, @NonNull final RemoteViews views) {
         views.setRemoteAdapter(R.id.widget_list,
                 new Intent(context, DetailWidgetRemoteViewsService.class));

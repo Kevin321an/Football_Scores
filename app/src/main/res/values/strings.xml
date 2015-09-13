@@ -46,5 +46,9 @@
     <string name="title_widget_match">match</string>
 
 
+    <string name="empty_forecast_list">No Match Information Available</string>
+
+
+
 
 </resources>

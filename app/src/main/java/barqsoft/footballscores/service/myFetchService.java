@@ -30,6 +30,7 @@ import barqsoft.footballscores.R;
  */
 public class MyFetchService extends IntentService
 {
+    public static final String ACTION_DATA_UPDATED ="barqsoft.footballscores.ACTION_DATA_UPDATED";
     public static final String LOG_TAG = MyFetchService.class.getSimpleName();
     public MyFetchService()
     {
@@ -260,18 +261,34 @@ public class MyFetchService extends IntentService
                 }
             }
             int inserted_data = 0;
-            ContentValues[] insert_data = new ContentValues[values.size()];
-            values.toArray(insert_data);
-            inserted_data = mContext.getContentResolver().bulkInsert(
-                    DatabaseContract.BASE_CONTENT_URI,insert_data);
+            // add to database
+            if (values.size()>0){
+                ContentValues[] insert_data = new ContentValues[values.size()];
+                values.toArray(insert_data);
+                inserted_data = mContext.getContentResolver().bulkInsert(
+                        DatabaseContract.BASE_CONTENT_URI,insert_data);
 
-            //Log.v(LOG_TAG,"Succesfully Inserted : " + String.valueOf(inserted_data));
+                //Log.v(LOG_TAG,"Succesfully Inserted : " + String.valueOf(inserted_data));
+                updateWidgets();
+
+            }
+
         }
         catch (JSONException e)
         {
             Log.e(LOG_TAG,e.getMessage());
         }
 
+    }
+    private void updateWidgets() {
+
+        //Context context = getContext();
+        //Service is Context
+        Context context = this.getBaseContext();
+        // Setting the package ensures that only components in this app will receive the broadcast
+        Intent dataUpdatedIntent = new Intent(ACTION_DATA_UPDATED)
+                .setPackage(context.getPackageName());
+        context.sendBroadcast(dataUpdatedIntent);
     }
 }
 

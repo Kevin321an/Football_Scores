@@ -19,7 +19,7 @@ public class MatchWidgetProvider extends AppWidgetProvider{
 
     // appWidgetIds: is ht unique id for the widget
     public void onUpdate(Context context, AppWidgetManager appWidgetManager, int[] appWidgetIds) {
-        int weatherArtResourceId = R.drawable.abc_ab_share_pack_holo_dark;
+        //int weatherArtResourceId = R.drawable.abc_ab_share_pack_holo_dark;
         String description = "Clear";
         double maxTemp = 24;
         //String formattedMaxTemperature = Utility.formatTemperature(context, maxTemp);
